@@ -1,0 +1,16 @@
+{
+    "name": "event-driven-dashboard",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Static site frontend interface",
+    "scripts": {
+        "build": "npx parcel build ./index.html"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "parcel-bundler": "^1.12.5",
+        "posthtml": "^0.16.6",
+        "posthtml-expressions": "^1.9.0"
+    }
+}

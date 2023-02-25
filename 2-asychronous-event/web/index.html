@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AWS-Demo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+</head>
+
+<body>
+    <div id='app'>
+        <section class="section">
+            <div class="container">
+                <h1 class="title" id="talk-title">Event-Driven Demo
+                </h1>
+                <p class="subtitle" id="talk-subtitle">
+                    powered by Amazon EventBridge
+                </p>
+            </div>
+        </section>
+        <section class=''>
+            <div class='container'>
+                <div class='columns is-mobile'>
+                    <div class='column is-3'>
+                        <div class='box'>
+                            <div class='title is-5'>
+                                Order Received
+                            </div>
+                            <hr />
+                            <div id='order-received' class='title is-3 has-text-centered'>
+
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class='column is-3'>
+                        <div class='box'>
+                            <div class='title is-5'>
+                                Invoice Sent
+                            </div>
+                            <hr />
+                            <div id='invoice-sent' class='title is-3 has-text-centered'>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class='column is-3'>
+                        <div class='box'>
+                            <div class='title is-5'>
+                                Fulfillment Completed
+                            </div>
+                            <hr />
+                            <div id='fulfillment-completed' class='title is-3 has-text-centered'>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class='column is-3'>
+                        <div class='box'>
+                            <div class='title is-5'>
+                                Shipping to Customer
+                            </div>
+                            <hr />
+                            <div id='logistic-started' class='title is-3 has-text-centered'>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+ <script src="https://cdn.jsdelivr.net/npm/vue@2.6.0"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8=" crossorigin="anonymous"></script>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data: {
+            title: '',
+            subtitle: '',
+            links: []
+        }
+    });
+
+    var order_received = 0;
+    var fulfillment_completed = 0;
+    var invoice_sent = 0;
+    var logistic_started = 0;
+
+    var fn_remove = function() {
+
+    };
+
+    var fn_load = function() {
+        var dev_talk = JSON.parse(localStorage.getItem('dev_talk'));
+        var dev_links = JSON.parse(localStorage.getItem('dev_links'));
+
+        if (!!dev_talk) {
+            app.title = dev_talk['title'];
+            app.subtitle = dev_talk['subtitle'];
+        }
+        if (!!dev_links) {
+            for (var i = 0; i < dev_links.length; i++) {
+                if (fn_checkIfExist(app.links, 'link', dev_links[i]['link'])) {
+
+                    app.links.push(dev_links[i]);
+                }
+            }
+        }
+
+    };
+
+    var fn_checkIfExist = function(arr, key, value) {
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i][key] == value) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    fn_load();
+    var ws_conn = new WebSocket('{{ WEBSOCKET_URL }}');
+    ws_conn.onopen = function() {};
+    // Log errors
+    ws_conn.onerror = function(error, event) {
+        console.log('WebSocket Error ' + error);
+        console.log(event)
+    };
+
+    var fn_ping = function() {
+        var message = {};
+        message['message'] = 'request';
+        message['type'] = 'ping';
+        ws_conn.send(JSON.stringify(message));
+    };
+    setInterval(fn_ping, 60000)
+
+    var fn_load_data = function() {
+        $("#order-received").html(order_received);
+        $("#invoice-sent").html(invoice_sent);
+        $("#fulfillment-completed").html(fulfillment_completed);
+        $("#logistic-started").html(logistic_started);
+    };
+
+    fn_load_data();
+    // Log messages from the server
+    ws_conn.onmessage = function(e) {
+        console.log("Message received");
+        console.log(e.data);
+        if (e.data == "\"order_received\"") {
+            window.order_received++;
+        }
+        else if (e.data == "\"invoice_sent\"") {
+            window.invoice_sent++;
+        }
+        else if (e.data == "\"fulfillment_completed\"") {
+            window.fulfillment_completed++;
+        }
+        else if (e.data == "\"logistic_started\"") {
+            window.logistic_started++;
+        }
+        fn_load_data();
+    };
+</script>
+
+</html>
